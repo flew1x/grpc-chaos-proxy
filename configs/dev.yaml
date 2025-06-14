@@ -1,0 +1,43 @@
+listener:
+  address: "localhost:5050"
+
+backend:
+  address: "localhost:5010"
+
+rules:
+  - name: "spammer-test"
+    match:
+      service: "companyinfov1.CompanyInfoService"
+      method_regex: "^GetCompanyInfoByIinOrBin$"
+    action:
+      spammer:
+        count: 5
+        delay: { min_ms: 1000, max_ms: 5000 }
+
+  - name: "chaos-test"
+    match:
+      service: "companyinfov1.CompanyInfoService"
+      method_regex: "^GetCompanyInfoByIinOrBin$"
+    action:
+      chaos:
+        actions:
+          - delay: { min_ms: 100, max_ms: 300 }
+          - abort:
+              code: "UNAVAILABLE"
+              percentage: 50
+
+  - name: "abort-test"
+    match:
+      service: "companyinfov1.CompanyInfoService"
+      method_regex: "^GetCompanyInfoByIinOrBin$"
+    action:
+      abort:
+        code: "UNAVAILABLE"
+        percentage: 50
+
+  - name: "delay-test"
+    match:
+      service: "companyinfov1.CompanyInfoService"
+      method_regex: "^GetCompanyInfoByIinOrBin$"
+    action:
+      delay: { min_ms: 100, max_ms: 300}
