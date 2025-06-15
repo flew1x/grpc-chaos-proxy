@@ -21,15 +21,6 @@ lint:
 test:
 	go test ./...
 
-docker:
-	docker build -t grpc-chaos-proxy .
-
-docker-run:
-	docker run --rm -it -p 5000:5000 --env-file .env grpc-chaos-proxy
-
-docker-compose:
-	cd devops && docker-compose up --build
-
 mod:
 	go mod tidy
 
