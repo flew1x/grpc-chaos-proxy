@@ -1,4 +1,4 @@
-package injector
+package abort
 
 import (
 	"github.com/flew1x/grpc-chaos-proxy/internal/config"
@@ -12,7 +12,7 @@ func BenchmarkAbortInjector_Apply(b *testing.B) {
 		Percentage: 100,
 	}
 
-	inj, err := NewAbort(cfg)
+	inj, err := NewAbortInjector(cfg)
 	if err != nil {
 		b.Fatalf("failed to create abort injector: %v", err)
 	}
@@ -31,7 +31,7 @@ func BenchmarkAbortInjector_Alloc(b *testing.B) {
 		Percentage: 100,
 	}
 
-	inj, err := NewAbort(cfg)
+	inj, err := NewAbortInjector(cfg)
 	if err != nil {
 		b.Fatalf("failed to create abort injector: %v", err)
 	}
@@ -51,7 +51,7 @@ func TestAbortInjector_Apply(t *testing.T) {
 		Percentage: 100,
 	}
 
-	inj, err := NewAbort(cfg)
+	inj, err := NewAbortInjector(cfg)
 	if err != nil {
 		t.Fatalf("failed to create abort injector: %v", err)
 	}

@@ -1,8 +1,8 @@
-package injector
+package utils
 
 import "google.golang.org/grpc/codes"
 
-var codeMap = map[string]codes.Code{
+var CodeMap = map[string]codes.Code{
 	"OK":                  codes.OK,
 	"CANCELLED":           codes.Canceled,
 	"UNKNOWN":             codes.Unknown,

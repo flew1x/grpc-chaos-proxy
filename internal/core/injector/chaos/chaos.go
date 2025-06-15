@@ -1,7 +1,8 @@
-package injector
+package chaos
 
 import (
 	"fmt"
+	"github.com/flew1x/grpc-chaos-proxy/internal/apperr"
 	"github.com/flew1x/grpc-chaos-proxy/internal/entity"
 	"math/rand"
 	"time"
@@ -10,15 +11,15 @@ import (
 	"github.com/flew1x/grpc-chaos-proxy/internal/core/engine"
 )
 
-// ChaosInjector randomly applies one of the configured actions
-type ChaosInjector struct {
+// Injector ChaosInjector randomly applies one of the configured actions
+type Injector struct {
 	injectors []engine.Injector
 }
 
 func NewChaosInjector(cfg any) (engine.Injector, error) {
 	chaosCfg, ok := cfg.(*config.ChaosAction)
 	if !ok || chaosCfg == nil || len(chaosCfg.Actions) == 0 {
-		return nil, fmt.Errorf("invalid or empty config for ChaosInjector")
+		return nil, apperr.ErrInvalidConfig
 	}
 
 	var injectors []engine.Injector
@@ -32,10 +33,10 @@ func NewChaosInjector(cfg any) (engine.Injector, error) {
 		injectors = append(injectors, inj)
 	}
 
-	return &ChaosInjector{injectors: injectors}, nil
+	return &Injector{injectors: injectors}, nil
 }
 
-func (c *ChaosInjector) Apply(f *engine.Frame) error {
+func (c *Injector) Apply(f *engine.Frame) error {
 	if len(c.injectors) == 0 {
 		return nil
 	}

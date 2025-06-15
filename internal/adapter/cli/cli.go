@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/flew1x/grpc-chaos-proxy/internal/bootstrap"
-	"github.com/flew1x/grpc-chaos-proxy/internal/config"
 	"go.uber.org/fx"
 
 	"github.com/spf13/cobra"
@@ -58,7 +57,7 @@ func newRunCmd(cfgPath *string) *cobra.Command {
 		Use:   "run",
 		Short: "Run proxy with supplied config file",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := validateConfigFile(*cfgPath); err != nil {
+			if err := ValidateConfigFile(*cfgPath); err != nil {
 				return err
 			}
 			app := fxApp(*cfgPath)
@@ -109,16 +108,8 @@ func newShowConfigCmd(cfgPath *string) *cobra.Command {
 	}
 }
 
-func validateConfigFile(path string) error {
-	return ValidateConfigFile(path)
-}
-
-func loadConfig(path string) (*config.Config, error) {
-	return LoadConfig(path)
-}
-
 func toggleRule(path, rule string, enable bool) error {
-	cfg, err := loadConfig(path)
+	cfg, err := LoadConfig(path)
 	if err != nil {
 		return err
 	}
@@ -146,7 +137,7 @@ func toggleRule(path, rule string, enable bool) error {
 		return err
 	}
 
-	if err := v.MergeConfigMap(map[string]interface{}{"rules": cfg.Rules}); err != nil {
+	if err := v.MergeConfigMap(map[string]any{"rules": cfg.Rules}); err != nil {
 		return err
 	}
 

@@ -15,10 +15,11 @@ import (
 )
 
 type Frame struct {
-	Ctx     context.Context // context of the call, can be used to read metadata
-	Service string          // service name, e.g., "com.example.Service"
-	Method  string          // method name, e.g., "MethodName"
-	MD      metadata.MD     // metadata of the call, can be used to read or modify metadata
+	Ctx       context.Context  // context of the call, can be used to read metadata
+	Service   string           // service name, e.g., "com.example.Service"
+	Method    string           // method name, e.g., "MethodName"
+	MD        metadata.MD      // metadata of the call, can be used to read or modify metadata
+	Direction entity.Direction // direction of the call: inbound, outbound, both
 }
 
 // Injector introduces a fault – blocks, modifies, or interrupts a call
@@ -155,7 +156,38 @@ func (e *Engine) reload() error {
 			if err != nil {
 				e.logger.Error("[engine] buildInjector error", zap.String("rule_name", r.Name), zap.Error(err))
 			}
+		case r.Action.Network != nil:
+			inj, err = buildInjector(entity.NetworkType, r.Action.Network)
+			if err != nil {
+				e.logger.Error("[engine] buildInjector error", zap.String("rule_name", r.Name), zap.Error(err))
+			}
+		case r.Action.Header != nil:
+			inj, err = buildInjector(entity.HeaderType, r.Action.Header)
+			if err != nil {
+				e.logger.Error("[engine] buildInjector error", zap.String("rule_name", r.Name), zap.Error(err))
+			}
+		case r.Action.RateLimiter != nil:
+			inj, err = buildInjector(entity.RateLimitType, r.Action.RateLimiter)
+			if err != nil {
+				e.logger.Error("[engine] buildInjector error", zap.String("rule_name", r.Name), zap.Error(err))
+			}
+		case r.Action.Disconnect != nil:
+			inj, err = buildInjector(entity.DisconnectType, r.Action.Disconnect)
+			if err != nil {
+				e.logger.Error("[engine] buildInjector error", zap.String("rule_name", r.Name), zap.Error(err))
+			}
+		case r.Action.Code != nil:
+			inj, err = buildInjector(entity.CodeType, r.Action.Code)
+			if err != nil {
+				e.logger.Error("[engine] buildInjector error", zap.String("rule_name", r.Name), zap.Error(err))
+			}
+		case r.Action.Script != nil:
+			inj, err = buildInjector(entity.ScriptType, r.Action.Script)
+			if err != nil {
+				e.logger.Error("[engine] buildInjector error", zap.String("rule_name", r.Name), zap.Error(err))
+			}
 		}
+
 		if inj == nil {
 			e.logger.Info("[engine] skip rule: injector is nil", zap.String("rule_name", r.Name))
 

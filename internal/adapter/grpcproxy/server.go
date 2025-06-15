@@ -6,10 +6,12 @@ import (
 	"github.com/flew1x/grpc-chaos-proxy/internal/apperr"
 	"github.com/flew1x/grpc-chaos-proxy/internal/config"
 	"github.com/flew1x/grpc-chaos-proxy/internal/core/engine"
+	"github.com/flew1x/grpc-chaos-proxy/internal/entity"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"net"
 	"net/http"
@@ -85,23 +87,30 @@ func (s *Server) handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	frame := &engine.Frame{
-		Ctx:     r.Context(),
-		Service: svc,
-		Method:  mth,
-		MD:      metadataFromHeader(r.Header),
+		Ctx:       r.Context(),
+		Service:   svc,
+		Method:    mth,
+		MD:        metadataFromHeader(r.Header),
+		Direction: entity.DirectionInbound,
 	}
 
 	if err := s.engine.Process(frame); err != nil {
 		if errors.Is(err, apperr.ErrNoMatchingRule) {
-			writeGRPCError(w, 5, "no matching rule for this method")
+			writeGRPCError(w, codes.NotFound, "no matching rule for this method")
 			logger.Warn("no matching rule for request", zap.String("service", svc))
 
 			return
 		}
 
-		st, _ := status.FromError(err)
-		writeGRPCError(w, st.Code(), st.Message())
-		s.log.Error("engine.Process error", zap.Error(err), zap.String("service", svc))
+		if st, ok := status.FromError(err); ok {
+			writeGRPCError(w, st.Code(), st.Message())
+			logger.Error("engine.Process gRPC error", zap.Error(err), zap.String("service", svc))
+
+			return
+		}
+
+		writeGRPCError(w, codes.Internal, "internal chaos error")
+		logger.Error("engine.Process unknown error", zap.Error(err), zap.String("service", svc))
 
 		return
 	}

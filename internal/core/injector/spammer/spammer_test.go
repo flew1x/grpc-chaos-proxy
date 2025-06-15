@@ -1,4 +1,4 @@
-package injector
+package spammer
 
 import (
 	"context"
@@ -19,7 +19,7 @@ func TestSpammerInjector_Apply_NoDelay(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	injTyped := inj.(*SpammerInjector)
+	injTyped := inj.(*Injector)
 	injTyped.sender = func(ctx context.Context, service, method string, md metadata.MD) error {
 		calls++
 
@@ -46,7 +46,7 @@ func TestSpammerInjector_Apply_WithDelay(t *testing.T) {
 	}
 
 	calls := 0
-	injTyped := inj.(*SpammerInjector)
+	injTyped := inj.(*Injector)
 
 	injTyped.sender = func(ctx context.Context, service, method string, md metadata.MD) error {
 		calls++
@@ -92,7 +92,7 @@ func TestSpammerInjector_Apply_Integration(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	injTyped := inj.(*SpammerInjector)
+	injTyped := inj.(*Injector)
 
 	injTyped.sender = func(ctx context.Context, service, method string, md metadata.MD) error {
 		calls++

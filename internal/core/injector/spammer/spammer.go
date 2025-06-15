@@ -1,51 +1,42 @@
-package injector
+package spammer
 
 import (
 	"context"
 	"fmt"
+	"github.com/flew1x/grpc-chaos-proxy/internal/apperr"
 	"github.com/flew1x/grpc-chaos-proxy/internal/config"
 	"github.com/flew1x/grpc-chaos-proxy/internal/core/engine"
+	"github.com/flew1x/grpc-chaos-proxy/internal/core/injector/utils"
 	"github.com/flew1x/grpc-chaos-proxy/internal/entity"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"sync"
 	"time"
 )
 
-type SpammerInjector struct {
+// Injector SpammerInjector sends a specified number of spam requests to the backend
+type Injector struct {
 	count       int
 	delay       *config.DelayAction
 	backendAddr string
 	sender      func(ctx context.Context, service, method string, md metadata.MD) error
 }
 
-var (
-	proxyAddrOnce   sync.Once
-	cachedProxyAddr string
-)
-
-func getProxyAddr() string {
-	proxyAddrOnce.Do(func() {
-		cfg := config.GetCurrentConfig()
-		if cfg != nil && cfg.Listener.Address != "" {
-			cachedProxyAddr = cfg.Listener.Address
-		}
-	})
-
-	return cachedProxyAddr
-}
-
+// NewSpammerInjector creates a new SpammerInjector based on the provided configuration
 func NewSpammerInjector(cfg any) (engine.Injector, error) {
 	sa, ok := cfg.(*config.SpammerAction)
-	if !ok || sa == nil || sa.Count <= 0 {
-		return nil, fmt.Errorf("invalid config for SpammerInjector")
+	if !ok || sa == nil {
+		return nil, apperr.ErrInvalidConfig
 	}
 
-	proxyAddr := getProxyAddr()
+	if sa.Count <= 0 {
+		return nil, fmt.Errorf("spammer count must be greater than 0, got %d", sa.Count)
+	}
 
-	return &SpammerInjector{
+	proxyAddr := utils.GetProxyAddr()
+
+	return &Injector{
 		count:       sa.Count,
 		delay:       sa.DelayAction,
 		backendAddr: proxyAddr,
@@ -53,7 +44,7 @@ func NewSpammerInjector(cfg any) (engine.Injector, error) {
 	}, nil
 }
 
-func (s *SpammerInjector) Apply(f *engine.Frame) error {
+func (s *Injector) Apply(f *engine.Frame) error {
 	if f.MD != nil {
 		if vals := f.MD.Get("x-spammer-request"); len(vals) > 0 && vals[0] == "1" {
 			return nil
@@ -68,7 +59,6 @@ func (s *SpammerInjector) Apply(f *engine.Frame) error {
 			if err != nil {
 				return err
 			}
-
 			defer conn.Close()
 
 			fullMethod := "/" + service + "/" + method
@@ -89,7 +79,7 @@ func (s *SpammerInjector) Apply(f *engine.Frame) error {
 
 			dur := time.Duration(minVal)
 			if maxVal > minVal {
-				dur = time.Duration(minVal + (randInt(maxVal - minVal)))
+				dur = time.Duration(minVal + (utils.RandInt(maxVal - minVal)))
 			}
 
 			time.Sleep(dur * time.Millisecond)
@@ -107,14 +97,6 @@ func (s *SpammerInjector) Apply(f *engine.Frame) error {
 		_ = send(f.Ctx, f.Service, f.Method, md)
 	}
 	return nil
-}
-
-func randInt(n int) int {
-	if n <= 0 {
-		return 0
-	}
-
-	return int(time.Now().UnixNano() % int64(n))
 }
 
 func init() {

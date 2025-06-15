@@ -1,4 +1,4 @@
-package injector
+package abort
 
 import (
 	"github.com/flew1x/grpc-chaos-proxy/internal/config"
@@ -10,12 +10,12 @@ import (
 )
 
 func TestNewAbort_InvalidConfig(t *testing.T) {
-	_, err := NewAbort(nil)
+	_, err := NewAbortInjector(nil)
 	if err == nil {
 		t.Error("expected error for nil config")
 	}
 
-	_, err = NewAbort(123)
+	_, err = NewAbortInjector(123)
 	if err == nil {
 		t.Error("expected error for wrong type config")
 	}
@@ -24,7 +24,7 @@ func TestNewAbort_InvalidConfig(t *testing.T) {
 func TestAbortInjector_Apply_PercentageZero(t *testing.T) {
 	cfg := &config.AbortAction{Code: "UNAVAILABLE", Percentage: 0}
 
-	inj, err := NewAbort(cfg)
+	inj, err := NewAbortInjector(cfg)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -38,7 +38,7 @@ func TestAbortInjector_Apply_PercentageZero(t *testing.T) {
 func TestAbortInjector_Apply_AlwaysAbort(t *testing.T) {
 	cfg := &config.AbortAction{Code: "UNAVAILABLE", Percentage: 100}
 
-	inj, err := NewAbort(cfg)
+	inj, err := NewAbortInjector(cfg)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -59,7 +59,7 @@ func TestAbortInjector_Apply_AlwaysAbort(t *testing.T) {
 func TestAbortInjector_Apply_NeverAbort(t *testing.T) {
 	cfg := &config.AbortAction{Code: "UNAVAILABLE", Percentage: 0}
 
-	inj, err := NewAbort(cfg)
+	inj, err := NewAbortInjector(cfg)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -75,7 +75,7 @@ func TestAbortInjector_Apply_NeverAbort(t *testing.T) {
 func TestAbortInjector_Apply_RandomAbort(t *testing.T) {
 	cfg := &config.AbortAction{Code: "UNAVAILABLE", Percentage: 50}
 
-	inj, err := NewAbort(cfg)
+	inj, err := NewAbortInjector(cfg)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

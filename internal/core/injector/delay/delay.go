@@ -1,7 +1,7 @@
-package injector
+package delay
 
 import (
-	"fmt"
+	"github.com/flew1x/grpc-chaos-proxy/internal/apperr"
 	"github.com/flew1x/grpc-chaos-proxy/internal/config"
 	"github.com/flew1x/grpc-chaos-proxy/internal/core/engine"
 	"github.com/flew1x/grpc-chaos-proxy/internal/entity"
@@ -9,17 +9,17 @@ import (
 	"time"
 )
 
-// DelayInjector sleeps for a random duration in [min,max] before forwarding the RPC
-type DelayInjector struct {
+// Injector DelayInjector sleeps for a random duration in [min,max] before forwarding the RPC
+type Injector struct {
 	min time.Duration
 	max time.Duration
 }
 
-// NewDelay builds the injector from config.DelayAction.
-func NewDelay(cfg any) (engine.Injector, error) {
+// NewDelayInjector builds the injector from config.DelayAction.
+func NewDelayInjector(cfg any) (engine.Injector, error) {
 	dc, ok := cfg.(*config.DelayAction)
 	if !ok || dc == nil {
-		return nil, fmt.Errorf("delay action config error")
+		return nil, apperr.ErrInvalidConfig
 	}
 
 	// fallback: if Max==0, use Min; if Min>Max, swap
@@ -31,13 +31,13 @@ func NewDelay(cfg any) (engine.Injector, error) {
 		dc.MinMS, dc.MaxMS = dc.MaxMS, dc.MinMS
 	}
 
-	return &DelayInjector{
+	return &Injector{
 		min: time.Duration(dc.MinMS) * time.Millisecond,
 		max: time.Duration(dc.MaxMS) * time.Millisecond,
 	}, nil
 }
 
-func (d *DelayInjector) Apply(f *engine.Frame) error {
+func (d *Injector) Apply(f *engine.Frame) error {
 	if d.max == 0 {
 		return nil
 	}
@@ -59,5 +59,5 @@ func (d *DelayInjector) Apply(f *engine.Frame) error {
 }
 
 func init() {
-	engine.Register(entity.DelayType, NewDelay)
+	engine.Register(entity.DelayType, NewDelayInjector)
 }

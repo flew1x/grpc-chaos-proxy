@@ -1,4 +1,4 @@
-package injector
+package delay
 
 import (
 	"context"
@@ -10,12 +10,12 @@ import (
 )
 
 func TestNewDelay_InvalidConfig(t *testing.T) {
-	_, err := NewDelay(nil)
+	_, err := NewDelayInjector(nil)
 	if err == nil {
 		t.Error("expected error for nil config")
 	}
 
-	_, err = NewDelay(123)
+	_, err = NewDelayInjector(123)
 	if err == nil {
 		t.Error("expected error for wrong type config")
 	}
@@ -24,12 +24,12 @@ func TestNewDelay_InvalidConfig(t *testing.T) {
 func TestNewDelay_MinMaxSwap(t *testing.T) {
 	cfg := &config.DelayAction{MinMS: 100, MaxMS: 50}
 
-	inj, err := NewDelay(cfg)
+	inj, err := NewDelayInjector(cfg)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	di := inj.(*DelayInjector)
+	di := inj.(*Injector)
 	if di.min > di.max {
 		t.Error("min should not be greater than max after swap")
 	}
@@ -37,7 +37,7 @@ func TestNewDelay_MinMaxSwap(t *testing.T) {
 
 func TestDelayInjector_Apply_NoDelay(t *testing.T) {
 	cfg := &config.DelayAction{MinMS: 0, MaxMS: 0}
-	inj, _ := NewDelay(cfg)
+	inj, _ := NewDelayInjector(cfg)
 	frame := &engine.Frame{Ctx: context.Background()}
 	start := time.Now()
 
@@ -53,7 +53,7 @@ func TestDelayInjector_Apply_NoDelay(t *testing.T) {
 
 func TestDelayInjector_Apply_Delay(t *testing.T) {
 	cfg := &config.DelayAction{MinMS: 10, MaxMS: 20}
-	inj, _ := NewDelay(cfg)
+	inj, _ := NewDelayInjector(cfg)
 	frame := &engine.Frame{Ctx: context.Background()}
 	start := time.Now()
 
@@ -70,7 +70,7 @@ func TestDelayInjector_Apply_Delay(t *testing.T) {
 
 func TestDelayInjector_Apply_ContextCancel(t *testing.T) {
 	cfg := &config.DelayAction{MinMS: 100, MaxMS: 200}
-	inj, _ := NewDelay(cfg)
+	inj, _ := NewDelayInjector(cfg)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
 	defer cancel()
@@ -85,7 +85,7 @@ func TestDelayInjector_Apply_ContextCancel(t *testing.T) {
 
 func TestDelayInjector_Apply_WithDelay(t *testing.T) {
 	cfg := &config.DelayAction{MinMS: 10, MaxMS: 20}
-	inj, err := NewDelay(cfg)
+	inj, err := NewDelayInjector(cfg)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
